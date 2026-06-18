@@ -1,36 +1,126 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# 🏢 Mini HRMS System
 
-## Getting Started
+## About the System
 
-First, run the development server:
+The **Mini HRMS (Human Resource Management System)** is a web-based admin tool designed to help organizations manage their workforce efficiently. It allows an admin to handle core HR operations in one place — from tracking employee records and monitoring attendance, to computing salaries and generating payroll summaries.
+
+The system is built with simplicity and usability in mind, making it easy for non-technical admin users to navigate and operate day-to-day HR tasks without hassle.
+
+---
+
+## 🛠 Tech Stack
+
+| Layer    | Technology                |
+|----------|---------------------------|
+| Frontend | React (Next.js)           |
+| Backend  | Next.js API Routes        |
+| Database | Supabase (PostgreSQL)     |
+| Styling  | Tailwind CSS              |
+
+---
+
+## ✨ Core Features
+
+- **Admin Login** — Secure login page for authorized admin access
+- **Employee Management** — Add, view, update, and remove employee records including position, department, and employment status
+- **Salary Management** — Set and manage each employee's basic salary, allowances, and deductions with automatic net salary computation
+- **Attendance Tracking** — Record and monitor daily employee attendance with statuses such as Present, Late, Absent, or On Leave
+- **Payroll Summary** — View a complete breakdown of employee salary computations per payroll period
+- **Dashboard** — At-a-glance overview of total employees, active headcount, employees on leave, and total monthly payroll
+
+---
+
+## 🧮 Salary Computation
+
+```
+Net Salary = Basic Salary + Allowance - Deductions
+```
+
+---
+
+## ⚙️ How to Run the Project
+
+### 1. Clone the Repository
+
+```bash
+git clone https://github.com/WhiteBeardddd/CubeTech-HRMS.git
+cd CubeTech-HRMS
+```
+
+### 2. Install Dependencies
+
+```bash
+npm install
+```
+
+### 3. Set Up Supabase
+
+1. Create a free project at [https://supabase.com](https://supabase.com)
+2. Go to **Settings → API** and copy your **Project URL** and **Anon Key**
+
+### 4. Configure Environment Variables
+
+Create a `.env.local` file in the root directory:
+
+```env
+NEXT_PUBLIC_SUPABASE_URL=your_supabase_project_url
+NEXT_PUBLIC_SUPABASE_ANON_KEY=your_supabase_anon_key
+```
+
+### 5. Set Up the Database
+
+In your Supabase project, open the **SQL Editor** and run the contents of:
+
+```
+database/schema.sql
+```
+
+### 6. Start the Development Server
 
 ```bash
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Open [http://localhost:3000](http://localhost:3000) in your browser.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+---
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+## 🔐 Default Admin Credentials
 
-## Learn More
+```
+Email:    admin@test.com
+Password: admin123
+```
 
-To learn more about Next.js, take a look at the following resources:
+---
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+## 📁 Folder Structure
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+```
+mini-hrms/
+├── app/
+│   ├── login/             # Login page
+│   ├── dashboard/         # Dashboard overview
+│   ├── employees/         # Employee management
+│   ├── salary/            # Salary management
+│   ├── attendance/        # Attendance tracking
+│   └── payroll/           # Payroll summary
+├── components/            # Reusable UI components
+├── lib/                   # Supabase client setup
+├── database/
+│   └── schema.sql         # Database tables
+├── public/                # Static assets
+└── .env.local             # Environment variables (not committed)
+```
 
-## Deploy on Vercel
+---
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+## 📸 Screenshots
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+> *(To be added once the system is complete)*
+
+---
+
+## 👤 Author
+
+**Charles Benedict Boquecosa**
