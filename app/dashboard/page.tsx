@@ -1,8 +1,9 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import { useRouter, usePathname } from 'next/navigation'
+import { useRouter } from 'next/navigation'
 import { supabase } from '@/lib/supabase'
+import Sidebar from '@/components/Sidebar'
 
 // ─── Types ───────────────────────────────────────────────
 type DashboardStats = {
@@ -10,92 +11,6 @@ type DashboardStats = {
   activeEmployees: number
   onLeave: number
   totalMonthlyPayroll: number
-}
-
-// ─── Sidebar Nav Items ────────────────────────────────────
-const navItems = [
-  { label: 'Dashboard', icon: '📊', href: '/dashboard' },
-  { label: 'Employees', icon: '👤', href: '/employees' },
-  { label: 'Salary', icon: '💰', href: '/salary' },
-  { label: 'Attendance', icon: '📅', href: '/attendance' },
-  { label: 'Payroll', icon: '🧾', href: '/payroll' },
-]
-
-// ─── Sidebar Component ────────────────────────────────────
-function Sidebar({ onLogout }: { onLogout: () => void }) {
-  const router = useRouter()
-  const pathname = usePathname()
-
-  return (
-    <div
-      className="flex flex-col h-full w-64 fixed left-0 top-0 bottom-0 p-6"
-      style={{ backgroundColor: '#1A2B4A' }}
-    >
-      {/* Logo */}
-      <div className="flex items-center gap-3 mb-10">
-        <div
-          className="w-9 h-9 rounded flex items-center justify-center font-bold text-white text-sm"
-          style={{ backgroundColor: '#2F80ED' }}
-        >
-          CH
-        </div>
-        <span className="text-white font-semibold text-base tracking-wide">
-          CubeTech HRMS
-        </span>
-      </div>
-
-      {/* Nav Links */}
-      <nav className="flex flex-col gap-1 flex-1">
-        {navItems.map((item) => {
-          const isActive = pathname === item.href
-          return (
-            <button
-              key={item.href}
-              onClick={() => router.push(item.href)}
-              className="flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-medium transition-all text-left w-full"
-              style={{
-                backgroundColor: isActive ? '#2F80ED' : 'transparent',
-                color: isActive ? '#fff' : '#94A3B8',
-              }}
-              onMouseEnter={(e) => {
-                if (!isActive) {
-                  e.currentTarget.style.backgroundColor = 'rgba(255,255,255,0.06)'
-                  e.currentTarget.style.color = '#fff'
-                }
-              }}
-              onMouseLeave={(e) => {
-                if (!isActive) {
-                  e.currentTarget.style.backgroundColor = 'transparent'
-                  e.currentTarget.style.color = '#94A3B8'
-                }
-              }}
-            >
-              <span>{item.icon}</span>
-              <span>{item.label}</span>
-            </button>
-          )
-        })}
-      </nav>
-
-      {/* Logout */}
-      <button
-        onClick={onLogout}
-        className="flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-medium transition-all w-full"
-        style={{ color: '#94A3B8' }}
-        onMouseEnter={(e) => {
-          e.currentTarget.style.backgroundColor = 'rgba(255,255,255,0.06)'
-          e.currentTarget.style.color = '#fff'
-        }}
-        onMouseLeave={(e) => {
-          e.currentTarget.style.backgroundColor = 'transparent'
-          e.currentTarget.style.color = '#94A3B8'
-        }}
-      >
-        <span>🚪</span>
-        <span>Logout</span>
-      </button>
-    </div>
-  )
 }
 
 // ─── Stat Card Component ──────────────────────────────────
@@ -144,7 +59,6 @@ export default function DashboardPage() {
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
-    // Auth guard
     const admin = localStorage.getItem('admin')
     if (!admin) {
       router.push('/login')
@@ -152,31 +66,28 @@ export default function DashboardPage() {
     }
     const parsed = JSON.parse(admin)
     setAdminEmail(parsed.email)
-
     fetchStats()
   }, [])
 
   const fetchStats = async () => {
     setLoading(true)
 
-    // Total employees
+    // Total = Active + On Leave only (excludes Resigned)
     const { count: total } = await supabase
       .from('employees')
       .select('*', { count: 'exact', head: true })
+      .neq('employment_status', 'Resigned')
 
-    // Active employees
     const { count: active } = await supabase
       .from('employees')
       .select('*', { count: 'exact', head: true })
       .eq('employment_status', 'Active')
 
-    // On leave employees
     const { count: onLeave } = await supabase
       .from('employees')
       .select('*', { count: 'exact', head: true })
       .eq('employment_status', 'On Leave')
 
-    // Total monthly payroll (sum of net_salary from salaries table)
     const { data: salaryData } = await supabase
       .from('salaries')
       .select('net_salary')
@@ -201,10 +112,10 @@ export default function DashboardPage() {
 
   return (
     <div className="flex min-h-screen" style={{ backgroundColor: '#F0F2F5' }}>
-      {/* Sidebar */}
+      {/* ── Sidebar ── */}
       <Sidebar onLogout={handleLogout} />
 
-      {/* Main Content */}
+      {/* ── Main Content ── */}
       <div className="flex-1 ml-64 p-8">
         {/* Header */}
         <div className="flex items-center justify-between mb-8">
@@ -234,36 +145,19 @@ export default function DashboardPage() {
           <div className="text-sm text-gray-400">Loading stats...</div>
         ) : (
           <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-5 mb-8">
-            <StatCard
-              label="Total Employees"
-              value={stats.totalEmployees}
-              icon="👥"
-              accent="#2F80ED"
-            />
-            <StatCard
-              label="Active Employees"
-              value={stats.activeEmployees}
-              icon="✅"
-              accent="#10B981"
-            />
-            <StatCard
-              label="Employees on Leave"
-              value={stats.onLeave}
-              icon="🏖️"
-              accent="#F59E0B"
-            />
+            <StatCard label="Total Employees" value={stats.totalEmployees} icon="👥" accent="#2F80ED" />
+            <StatCard label="Active Employees" value={stats.activeEmployees} icon="✅" accent="#10B981" />
+            <StatCard label="Employees on Leave" value={stats.onLeave} icon="🏖️" accent="#F59E0B" />
             <StatCard
               label="Total Monthly Payroll"
-              value={`₱${stats.totalMonthlyPayroll.toLocaleString('en-PH', {
-                minimumFractionDigits: 2,
-              })}`}
+              value={`₱${stats.totalMonthlyPayroll.toLocaleString('en-PH', { minimumFractionDigits: 2 })}`}
               icon="💰"
               accent="#8B5CF6"
             />
           </div>
         )}
 
-        {/* Quick Links */}
+        {/* Quick Actions */}
         <div>
           <h2 className="text-sm font-semibold text-gray-500 uppercase tracking-wider mb-4">
             Quick Actions

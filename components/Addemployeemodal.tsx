@@ -1,0 +1,160 @@
+'use client'
+
+import { useState } from 'react'
+import { supabase } from '@/lib/supabase'
+
+// ─── Types ────────────────────────────────────────────────
+type Employee = {
+  id: string
+  employee_id: string
+  full_name: string
+  email: string
+  contact_number: string
+  position: string
+  department: string
+  date_hired: string
+  employment_status: 'Active' | 'Resigned' | 'On Leave'
+  created_at: string
+}
+
+type EmployeeForm = Omit<Employee, 'id' | 'created_at'>
+
+const emptyForm: EmployeeForm = {
+  employee_id: '',
+  full_name: '',
+  email: '',
+  contact_number: '',
+  position: '',
+  department: '',
+  date_hired: '',
+  employment_status: 'Active',
+}
+
+// ─── Props ────────────────────────────────────────────────
+type Props = {
+  editTarget: Employee | null
+  onClose: () => void
+  onSaved: () => void
+}
+
+// ─── Component ────────────────────────────────────────────
+export default function AddEmployeeModal({ editTarget, onClose, onSaved }: Props) {
+  const [form, setForm] = useState<EmployeeForm>(
+    editTarget
+      ? {
+          employee_id: editTarget.employee_id,
+          full_name: editTarget.full_name,
+          email: editTarget.email,
+          contact_number: editTarget.contact_number,
+          position: editTarget.position,
+          department: editTarget.department,
+          date_hired: editTarget.date_hired,
+          employment_status: editTarget.employment_status,
+        }
+      : emptyForm
+  )
+  const [saving, setSaving] = useState(false)
+  const [error, setError] = useState('')
+
+  const handleSave = async () => {
+    if (!form.employee_id || !form.full_name || !form.email) {
+      setError('Employee ID, Full Name, and Email are required.')
+      return
+    }
+    setSaving(true)
+    setError('')
+
+    if (editTarget) {
+      const { error } = await supabase
+        .from('employees')
+        .update(form)
+        .eq('id', editTarget.id)
+      if (error) { setError(error.message); setSaving(false); return }
+    } else {
+      const { error } = await supabase.from('employees').insert(form)
+      if (error) { setError(error.message); setSaving(false); return }
+    }
+
+    setSaving(false)
+    onSaved()
+  }
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center" style={{ backgroundColor: 'rgba(0,0,0,0.4)' }}>
+      <div className="bg-white rounded-2xl shadow-xl w-full max-w-lg mx-4 p-7">
+        <h2 className="text-lg font-bold mb-5" style={{ color: '#1A2B4A' }}>
+          {editTarget ? 'Edit Employee' : 'Add New Employee'}
+        </h2>
+
+        <div className="grid grid-cols-2 gap-4">
+          <Field label="Employee ID *" value={form.employee_id} onChange={(v) => setForm({ ...form, employee_id: v })} placeholder="EMP-001" />
+          <Field label="Full Name *" value={form.full_name} onChange={(v) => setForm({ ...form, full_name: v })} placeholder="Juan Dela Cruz" />
+          <Field label="Email *" value={form.email} onChange={(v) => setForm({ ...form, email: v })} placeholder="juan@email.com" type="email" />
+          <Field label="Contact Number" value={form.contact_number} onChange={(v) => setForm({ ...form, contact_number: v })} placeholder="09xxxxxxxxx" />
+          <Field label="Position" value={form.position} onChange={(v) => setForm({ ...form, position: v })} placeholder="Developer" />
+          <Field label="Department" value={form.department} onChange={(v) => setForm({ ...form, department: v })} placeholder="Engineering" />
+          <Field label="Date Hired" value={form.date_hired} onChange={(v) => setForm({ ...form, date_hired: v })} type="date" />
+
+          <div className="flex flex-col gap-1">
+            <label className="text-xs font-semibold" style={{ color: '#64748B' }}>Employment Status</label>
+            <select
+              value={form.employment_status}
+              onChange={(e) => setForm({ ...form, employment_status: e.target.value as EmployeeForm['employment_status'] })}
+              className="px-3 py-2.5 rounded-lg text-sm outline-none"
+              style={{ border: '1px solid #E5E7EB', color: '#1A2B4A' }}
+            >
+              <option>Active</option>
+              <option>Resigned</option>
+              <option>On Leave</option>
+            </select>
+          </div>
+        </div>
+
+        {error && <p className="text-xs text-red-500 mt-3">{error}</p>}
+
+        <div className="flex justify-end gap-3 mt-6">
+          <button
+            onClick={onClose}
+            className="px-4 py-2 rounded-lg text-sm font-medium"
+            style={{ color: '#64748B', border: '1px solid #E5E7EB' }}
+          >
+            Cancel
+          </button>
+          <button
+            onClick={handleSave}
+            disabled={saving}
+            className="px-5 py-2 rounded-lg text-sm font-semibold text-white disabled:opacity-60"
+            style={{ backgroundColor: '#2F80ED' }}
+          >
+            {saving ? 'Saving...' : editTarget ? 'Save Changes' : 'Add Employee'}
+          </button>
+        </div>
+      </div>
+    </div>
+  )
+}
+
+// ─── Reusable Field ───────────────────────────────────────
+function Field({
+  label, value, onChange, placeholder = '', type = 'text',
+}: {
+  label: string
+  value: string
+  onChange: (v: string) => void
+  placeholder?: string
+  type?: string
+}) {
+  return (
+    <div className="flex flex-col gap-1">
+      <label className="text-xs font-semibold" style={{ color: '#64748B' }}>{label}</label>
+      <input
+        type={type}
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+        placeholder={placeholder}
+        className="px-3 py-2.5 rounded-lg text-sm outline-none"
+        style={{ border: '1px solid #E5E7EB', color: '#1A2B4A' }}
+      />
+    </div>
+  )
+}
