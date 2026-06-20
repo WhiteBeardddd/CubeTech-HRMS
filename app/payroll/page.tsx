@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { supabase } from '@/lib/supabase'
 import Sidebar from '@/components/Sidebar'
+import { useSidebar } from '@/components/SidebarContext'
 
 // ─── Types ───────────────────────────────────────────────
 type Employee = {
@@ -39,6 +40,7 @@ type PayrollRecord = {
 
 export default function PayrollPage() {
   const router = useRouter()
+  const { collapsed } = useSidebar()
 
   const [payrolls, setPayrolls] = useState<PayrollRecord[]>([])
   const [employees, setEmployees] = useState<Employee[]>([])
@@ -116,7 +118,10 @@ export default function PayrollPage() {
         <Sidebar onLogout={handleLogout} />
       </div>
 
-      <div className="flex-1 ml-64 p-8 print:ml-0 print:p-0">
+      <div
+        className="flex-1 p-8 transition-all duration-200 print:ml-0 print:p-0"
+        style={{ marginLeft: collapsed ? '5rem' : '16rem' }}
+      >
         {/* Header */}
         <div className="flex items-center justify-between mb-8 print:hidden">
           <div>
