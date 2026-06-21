@@ -117,7 +117,51 @@ mini-hrms/
 
 ## 📸 Screenshots
 
-> *(To be added once the system is complete)*
+<table>
+  <tr>
+    <td align="center" width="55%">
+      <img src="public/images/readme01.png" width="430" alt="Login Page"/>
+      <br/>
+      <b>Login Page</b>
+    </td>
+    <td align="center" width="50%">
+      <img src="public/images/readme02.png" width="430" alt="Dashboard Overview"/>
+      <br/>
+      <b>Dashboard Overview</b>
+    </td>
+  </tr>
+  <tr>
+    <td align="center" width="50%">
+      <img src="public/images/readme03.png" width="430" alt="Employee Management"/>
+      <br/>
+      <b>Dashboard Analytics</b>
+    </td>
+    <td align="center" width="50%">
+      <img src="public/images/readme04.png" width="430" alt="Salary Management"/>
+      <br/>
+      <b>Employee Management</b>
+    </td>
+  </tr>
+  <tr>
+    <td align="center" width="50%">
+      <img src="public/images/readme05.png" width="430" alt="Attendance Tracking"/>
+      <br/>
+      <b>Salary Tracking</b>
+    </td>
+    <td align="center" width="50%">
+      <img src="public/images/readme06.png" width="430" alt="Payroll Summary"/>
+      <br/>
+      <b>Attendance Summary</b>
+    </td>
+  </tr>
+  <tr>
+    <td align="center" colspan="2">
+      <img src="public/images/readme07.png" width="430" alt="Dashboard Analytics"/>
+      <br/>
+      <b>Salary Analytics</b>
+    </td>
+  </tr>
+</table>
 
 ---
 
