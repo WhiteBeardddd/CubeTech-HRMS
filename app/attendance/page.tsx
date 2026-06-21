@@ -2,9 +2,11 @@
 
 import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
+import { Pencil, Trash2, Plus } from 'lucide-react'
 import { supabase } from '@/lib/supabase'
 import Sidebar from '@/components/Sidebar'
 import { useSidebar } from '@/components/SidebarContext'
+import Pagination from '@/components/Pagination'
 // ─── Types ────────────────────────────────────────────────
 type Employee = {
   id: string
@@ -41,12 +43,14 @@ const emptyForm: AttendanceForm = {
   status: 'Present',
 }
 
-const STATUS_COLORS: Record<string, { bg: string; text: string }> = {
-  Present:   { bg: '#D1FAE5', text: '#065F46' },
-  Late:      { bg: '#FEF3C7', text: '#92400E' },
-  Absent:    { bg: '#FEE2E2', text: '#991B1B' },
-  'On Leave':{ bg: '#EDE9FE', text: '#5B21B6' },
+const STATUS_COLORS: Record<string, string> = {
+  Present: '#34D399',
+  Late: '#F5A623',
+  Absent: '#F87171',
+  'On Leave': '#60A5FA',
 }
+
+const PAGE_SIZE = 10
 
 // ─── Main Page ────────────────────────────────────────────
 export default function AttendancePage() {
@@ -64,12 +68,18 @@ export default function AttendancePage() {
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState('')
   const [deleteTarget, setDeleteTarget] = useState<Attendance | null>(null)
+  const [currentPage, setCurrentPage] = useState(1)
 
   useEffect(() => {
     const admin = localStorage.getItem('admin')
     if (!admin) { router.push('/login'); return }
     fetchData()
   }, [])
+
+  // Reset to page 1 whenever filters change
+  useEffect(() => {
+    setCurrentPage(1)
+  }, [search, filterDate, filterStatus])
 
   // ─── Fetch ───────────────────────────────────────────────
   const fetchData = async () => {
@@ -182,6 +192,10 @@ export default function AttendancePage() {
     return matchSearch && matchDate && matchStatus
   })
 
+  // ─── Paginated slice ───────────────────────────────────────
+  const totalPages = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE))
+  const paginated = filtered.slice((currentPage - 1) * PAGE_SIZE, currentPage * PAGE_SIZE)
+
   // ─── Status auto-suggest based on time_in ────────────────
   const handleTimeInChange = (val: string) => {
     setForm((prev) => {
@@ -196,8 +210,14 @@ export default function AttendancePage() {
     })
   }
 
+  const inputStyle = {
+    border: '1px solid #1F2924',
+    backgroundColor: '#181F1B',
+    color: '#EAF4EF',
+  }
+
   return (
-    <div className="flex min-h-screen" style={{ backgroundColor: '#F0F2F5' }}>
+    <div className="flex min-h-screen" style={{ backgroundColor: '#0A0E0C' }}>
       <Sidebar onLogout={handleLogout} />
 
       <div
@@ -207,15 +227,16 @@ export default function AttendancePage() {
         {/* Header */}
         <div className="flex items-center justify-between mb-6">
           <div>
-            <h1 className="text-2xl font-bold" style={{ color: '#1A2B4A' }}>Attendance</h1>
-            <p className="text-sm text-gray-500 mt-1">Record and manage employee attendance</p>
+            <h1 className="text-2xl font-bold" style={{ color: '#EAF4EF' }}>Attendance</h1>
+            <p className="text-sm mt-1" style={{ color: '#7C8A82' }}>Record and manage employee attendance</p>
           </div>
           <button
             onClick={openAdd}
-            className="px-5 py-2.5 rounded-lg text-sm font-semibold text-white transition-opacity hover:opacity-90"
-            style={{ backgroundColor: '#2F80ED' }}
+            className="flex items-center gap-2 px-5 py-2.5 rounded-lg text-sm font-semibold transition-opacity hover:opacity-90"
+            style={{ backgroundColor: '#34D399', color: '#08130D' }}
           >
-            + Record Attendance
+            <Plus size={16} strokeWidth={2.5} />
+            Record Attendance
           </button>
         </div>
 
@@ -227,20 +248,20 @@ export default function AttendancePage() {
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             className="px-4 py-2.5 rounded-lg text-sm outline-none"
-            style={{ border: '1px solid #E5E7EB', backgroundColor: '#fff', color: '#1A2B4A', minWidth: '260px' }}
+            style={{ ...inputStyle, minWidth: '260px' }}
           />
           <input
             type="date"
             value={filterDate}
             onChange={(e) => setFilterDate(e.target.value)}
             className="px-4 py-2.5 rounded-lg text-sm outline-none"
-            style={{ border: '1px solid #E5E7EB', backgroundColor: '#fff', color: '#1A2B4A' }}
+            style={inputStyle}
           />
           <select
             value={filterStatus}
             onChange={(e) => setFilterStatus(e.target.value)}
             className="px-4 py-2.5 rounded-lg text-sm outline-none"
-            style={{ border: '1px solid #E5E7EB', backgroundColor: '#fff', color: '#1A2B4A' }}
+            style={inputStyle}
           >
             <option value="">All Statuses</option>
             <option>Present</option>
@@ -252,7 +273,7 @@ export default function AttendancePage() {
             <button
               onClick={() => { setFilterDate(''); setFilterStatus('') }}
               className="px-4 py-2.5 rounded-lg text-sm font-medium"
-              style={{ color: '#64748B', border: '1px solid #E5E7EB', backgroundColor: '#fff' }}
+              style={{ color: '#A8B8AF', border: '1px solid #1F2924', backgroundColor: '#12161A' }}
             >
               Clear Filters
             </button>
@@ -260,42 +281,42 @@ export default function AttendancePage() {
         </div>
 
         {/* Table */}
-        <div className="bg-white rounded-xl shadow-sm overflow-hidden" style={{ border: '1px solid #E5E7EB' }}>
+        <div className="rounded-[20px] overflow-hidden" style={{ backgroundColor: '#12161A', border: '1px solid #1F2924' }}>
           {loading ? (
-            <div className="p-8 text-sm text-gray-400 text-center">Loading attendance records...</div>
-          ) : filtered.length === 0 ? (
-            <div className="p-8 text-sm text-gray-400 text-center">No attendance records found.</div>
+            <div className="p-8 text-sm text-center" style={{ color: '#7C8A82' }}>Loading attendance records...</div>
+          ) : paginated.length === 0 ? (
+            <div className="p-8 text-sm text-center" style={{ color: '#7C8A82' }}>No attendance records found.</div>
           ) : (
             <div className="overflow-x-auto">
               <table className="w-full text-sm">
                 <thead>
-                  <tr style={{ backgroundColor: '#F8FAFC', borderBottom: '1px solid #E5E7EB' }}>
+                  <tr style={{ backgroundColor: '#161B17', borderBottom: '1px solid #1F2924' }}>
                     {['Employee', 'Department', 'Date', 'Time In', 'Time Out', 'Status', 'Actions'].map((h) => (
-                      <th key={h} className="text-left px-5 py-3.5 font-semibold text-xs uppercase tracking-wider" style={{ color: '#64748B' }}>
+                      <th key={h} className="text-left px-5 py-3.5 font-semibold text-xs uppercase tracking-wider" style={{ color: '#7C8A82' }}>
                         {h}
                       </th>
                     ))}
                   </tr>
                 </thead>
                 <tbody>
-                  {filtered.map((a, i) => (
-                    <tr key={a.id} style={{ borderBottom: i < filtered.length - 1 ? '1px solid #F1F5F9' : 'none' }}>
-                      <td className="px-5 py-4" style={{ color: '#1A2B4A' }}>
+                  {paginated.map((a, i) => (
+                    <tr key={a.id} style={{ borderBottom: i < paginated.length - 1 ? '1px solid #1A211D' : 'none' }}>
+                      <td className="px-5 py-4" style={{ color: '#EAF4EF' }}>
                         <p className="font-medium">{a.employee?.full_name ?? '—'}</p>
-                        <p className="text-xs text-gray-400 font-mono">{a.employee?.employee_id ?? ''}</p>
+                        <p className="text-xs font-mono" style={{ color: '#7C8A82' }}>{a.employee?.employee_id ?? ''}</p>
                       </td>
-                      <td className="px-5 py-4 text-gray-500">{a.employee?.department ?? '—'}</td>
-                      <td className="px-5 py-4 text-gray-500">
+                      <td className="px-5 py-4" style={{ color: '#A8B8AF' }}>{a.employee?.department ?? '—'}</td>
+                      <td className="px-5 py-4" style={{ color: '#A8B8AF' }}>
                         {new Date(a.date + 'T00:00:00').toLocaleDateString('en-PH', { year: 'numeric', month: 'short', day: 'numeric' })}
                       </td>
-                      <td className="px-5 py-4 text-gray-500">{a.time_in ?? '—'}</td>
-                      <td className="px-5 py-4 text-gray-500">{a.time_out ?? '—'}</td>
+                      <td className="px-5 py-4" style={{ color: '#A8B8AF' }}>{a.time_in ?? '—'}</td>
+                      <td className="px-5 py-4" style={{ color: '#A8B8AF' }}>{a.time_out ?? '—'}</td>
                       <td className="px-5 py-4">
                         <span
                           className="px-2.5 py-1 rounded-full text-xs font-semibold"
                           style={{
-                            backgroundColor: STATUS_COLORS[a.status]?.bg,
-                            color: STATUS_COLORS[a.status]?.text,
+                            backgroundColor: `${STATUS_COLORS[a.status]}1F`,
+                            color: STATUS_COLORS[a.status],
                           }}
                         >
                           {a.status}
@@ -303,8 +324,22 @@ export default function AttendancePage() {
                       </td>
                       <td className="px-5 py-4">
                         <div className="flex items-center gap-3">
-                          <button onClick={() => openEdit(a)} className="text-xs font-medium hover:opacity-70" style={{ color: '#2F80ED' }}>Edit</button>
-                          <button onClick={() => setDeleteTarget(a)} className="text-xs font-medium hover:opacity-70" style={{ color: '#EF4444' }}>Delete</button>
+                          <button
+                            onClick={() => openEdit(a)}
+                            title="Edit"
+                            className="p-1.5 rounded-md hover:opacity-70 transition-opacity"
+                            style={{ color: '#2DD4BF' }}
+                          >
+                            <Pencil size={16} />
+                          </button>
+                          <button
+                            onClick={() => setDeleteTarget(a)}
+                            title="Delete"
+                            className="p-1.5 rounded-md hover:opacity-70 transition-opacity"
+                            style={{ color: '#F87171' }}
+                          >
+                            <Trash2 size={16} />
+                          </button>
                         </div>
                       </td>
                     </tr>
@@ -315,27 +350,30 @@ export default function AttendancePage() {
           )}
         </div>
 
-        {!loading && (
-          <p className="text-xs text-gray-400 mt-3">
-            Showing {filtered.length} of {attendance.length} records
-          </p>
+        {!loading && filtered.length > 0 && (
+          <>
+            <p className="text-xs mt-3 text-center" style={{ color: '#7C8A82' }}>
+              Showing {(currentPage - 1) * PAGE_SIZE + 1}–{Math.min(currentPage * PAGE_SIZE, filtered.length)} of {filtered.length} records
+            </p>
+            <Pagination currentPage={currentPage} totalPages={totalPages} onPageChange={setCurrentPage} />
+          </>
         )}
       </div>
 
       {/* ── Add / Edit Modal ── */}
       {showModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center" style={{ backgroundColor: 'rgba(0,0,0,0.4)' }}>
-          <div className="bg-white rounded-2xl shadow-xl w-full max-w-md mx-4 p-7">
-            <h2 className="text-lg font-bold mb-5" style={{ color: '#1A2B4A' }}>
+        <div className="fixed inset-0 z-50 flex items-center justify-center" style={{ backgroundColor: 'rgba(0,0,0,0.6)' }}>
+          <div className="rounded-2xl w-full max-w-md mx-4 p-7" style={{ backgroundColor: '#12161A', border: '1px solid #1F2924' }}>
+            <h2 className="text-lg font-bold mb-5" style={{ color: '#EAF4EF' }}>
               {editTarget ? 'Edit Attendance' : 'Record Attendance'}
             </h2>
 
             <div className="flex flex-col gap-4">
               {/* Employee */}
               <div className="flex flex-col gap-1">
-                <label className="text-xs font-semibold" style={{ color: '#64748B' }}>Employee *</label>
+                <label className="text-xs font-semibold" style={{ color: '#7C8A82' }}>Employee *</label>
                 {editTarget ? (
-                  <div className="px-3 py-2.5 rounded-lg text-sm" style={{ backgroundColor: '#F8FAFC', border: '1px solid #E5E7EB', color: '#1A2B4A' }}>
+                  <div className="px-3 py-2.5 rounded-lg text-sm" style={{ backgroundColor: '#181F1B', border: '1px solid #1F2924', color: '#EAF4EF' }}>
                     {attendance.find(a => a.id === editTarget.id)?.employee?.full_name ?? '—'}
                   </div>
                 ) : (
@@ -343,7 +381,7 @@ export default function AttendancePage() {
                     value={form.employee_id}
                     onChange={(e) => setForm({ ...form, employee_id: e.target.value })}
                     className="px-3 py-2.5 rounded-lg text-sm outline-none"
-                    style={{ border: '1px solid #E5E7EB', color: '#1A2B4A' }}
+                    style={inputStyle}
                   >
                     <option value="">— Select Employee —</option>
                     {employees.map((e) => (
@@ -357,48 +395,48 @@ export default function AttendancePage() {
 
               {/* Date */}
               <div className="flex flex-col gap-1">
-                <label className="text-xs font-semibold" style={{ color: '#64748B' }}>Date *</label>
+                <label className="text-xs font-semibold" style={{ color: '#7C8A82' }}>Date *</label>
                 <input
                   type="date"
                   value={form.date}
                   onChange={(e) => setForm({ ...form, date: e.target.value })}
                   className="px-3 py-2.5 rounded-lg text-sm outline-none"
-                  style={{ border: '1px solid #E5E7EB', color: '#1A2B4A' }}
+                  style={inputStyle}
                 />
               </div>
 
               {/* Time In / Time Out */}
               <div className="grid grid-cols-2 gap-4">
                 <div className="flex flex-col gap-1">
-                  <label className="text-xs font-semibold" style={{ color: '#64748B' }}>Time In</label>
+                  <label className="text-xs font-semibold" style={{ color: '#7C8A82' }}>Time In</label>
                   <input
                     type="time"
                     value={form.time_in}
                     onChange={(e) => handleTimeInChange(e.target.value)}
                     className="px-3 py-2.5 rounded-lg text-sm outline-none"
-                    style={{ border: '1px solid #E5E7EB', color: '#1A2B4A' }}
+                    style={inputStyle}
                   />
                 </div>
                 <div className="flex flex-col gap-1">
-                  <label className="text-xs font-semibold" style={{ color: '#64748B' }}>Time Out</label>
+                  <label className="text-xs font-semibold" style={{ color: '#7C8A82' }}>Time Out</label>
                   <input
                     type="time"
                     value={form.time_out}
                     onChange={(e) => setForm({ ...form, time_out: e.target.value })}
                     className="px-3 py-2.5 rounded-lg text-sm outline-none"
-                    style={{ border: '1px solid #E5E7EB', color: '#1A2B4A' }}
+                    style={inputStyle}
                   />
                 </div>
               </div>
 
               {/* Status */}
               <div className="flex flex-col gap-1">
-                <label className="text-xs font-semibold" style={{ color: '#64748B' }}>Status *</label>
+                <label className="text-xs font-semibold" style={{ color: '#7C8A82' }}>Status *</label>
                 <select
                   value={form.status}
                   onChange={(e) => setForm({ ...form, status: e.target.value as AttendanceForm['status'] })}
                   className="px-3 py-2.5 rounded-lg text-sm outline-none"
-                  style={{ border: '1px solid #E5E7EB', color: '#1A2B4A' }}
+                  style={inputStyle}
                 >
                   <option>Present</option>
                   <option>Late</option>
@@ -408,26 +446,26 @@ export default function AttendancePage() {
               </div>
 
               {/* Status hint */}
-              <p className="text-xs text-gray-400 -mt-2">
+              <p className="text-xs -mt-2" style={{ color: '#7C8A82' }}>
                 💡 Status auto-suggests based on Time In — after 9:00 AM is marked Late.
               </p>
             </div>
 
-            {error && <p className="text-xs text-red-500 mt-3">{error}</p>}
+            {error && <p className="text-xs mt-3" style={{ color: '#F87171' }}>{error}</p>}
 
             <div className="flex justify-end gap-3 mt-6">
               <button
                 onClick={() => setShowModal(false)}
                 className="px-4 py-2 rounded-lg text-sm font-medium"
-                style={{ color: '#64748B', border: '1px solid #E5E7EB' }}
+                style={{ color: '#A8B8AF', border: '1px solid #1F2924' }}
               >
                 Cancel
               </button>
               <button
                 onClick={handleSave}
                 disabled={saving}
-                className="px-5 py-2 rounded-lg text-sm font-semibold text-white disabled:opacity-60"
-                style={{ backgroundColor: '#2F80ED' }}
+                className="px-5 py-2 rounded-lg text-sm font-semibold disabled:opacity-60"
+                style={{ backgroundColor: '#34D399', color: '#08130D' }}
               >
                 {saving ? 'Saving...' : editTarget ? 'Save Changes' : 'Record'}
               </button>
@@ -438,26 +476,26 @@ export default function AttendancePage() {
 
       {/* ── Delete Confirm Modal ── */}
       {deleteTarget && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center" style={{ backgroundColor: 'rgba(0,0,0,0.4)' }}>
-          <div className="bg-white rounded-2xl shadow-xl w-full max-w-sm mx-4 p-7 text-center">
+        <div className="fixed inset-0 z-50 flex items-center justify-center" style={{ backgroundColor: 'rgba(0,0,0,0.6)' }}>
+          <div className="rounded-2xl w-full max-w-sm mx-4 p-7 text-center" style={{ backgroundColor: '#12161A', border: '1px solid #1F2924' }}>
             <div className="text-4xl mb-4">🗑️</div>
-            <h2 className="text-lg font-bold mb-2" style={{ color: '#1A2B4A' }}>Delete Record?</h2>
-            <p className="text-sm text-gray-500 mb-6">
-              Delete attendance record for <span className="font-semibold">{deleteTarget.employee?.full_name}</span> on{' '}
-              <span className="font-semibold">{new Date(deleteTarget.date + 'T00:00:00').toLocaleDateString('en-PH')}</span>?
+            <h2 className="text-lg font-bold mb-2" style={{ color: '#EAF4EF' }}>Delete Record?</h2>
+            <p className="text-sm mb-6" style={{ color: '#A8B8AF' }}>
+              Delete attendance record for <span className="font-semibold" style={{ color: '#EAF4EF' }}>{deleteTarget.employee?.full_name}</span> on{' '}
+              <span className="font-semibold" style={{ color: '#EAF4EF' }}>{new Date(deleteTarget.date + 'T00:00:00').toLocaleDateString('en-PH')}</span>?
             </p>
             <div className="flex justify-center gap-3">
               <button
                 onClick={() => setDeleteTarget(null)}
                 className="px-5 py-2 rounded-lg text-sm font-medium"
-                style={{ color: '#64748B', border: '1px solid #E5E7EB' }}
+                style={{ color: '#A8B8AF', border: '1px solid #1F2924' }}
               >
                 Cancel
               </button>
               <button
                 onClick={handleDelete}
-                className="px-5 py-2 rounded-lg text-sm font-semibold text-white"
-                style={{ backgroundColor: '#EF4444' }}
+                className="px-5 py-2 rounded-lg text-sm font-semibold"
+                style={{ backgroundColor: '#F87171', color: '#1A0A0A' }}
               >
                 Delete
               </button>
