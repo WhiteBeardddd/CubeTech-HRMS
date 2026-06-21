@@ -1,15 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import {
-  BarChart,
-  Bar,
-  XAxis,
-  YAxis,
-  CartesianGrid,
-  Tooltip,
-  ResponsiveContainer,
-} from "recharts";
+import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts'
 import { getPayrollTrend } from "@/lib/analytics";
 
 export default function PayrollTrendChart() {
@@ -44,26 +36,23 @@ export default function PayrollTrendChart() {
         </div>
       ) : (
         <ResponsiveContainer width="100%" height={280}>
-          <BarChart data={data}>
-            <CartesianGrid strokeDasharray="3 3" stroke="#1F2924" />
-            <XAxis dataKey="month" tick={{ fontSize: 12, fill: "#7C8A82" }} stroke="#1F2924" />
-            <YAxis
-              tick={{ fontSize: 12, fill: "#7C8A82" }}
-              stroke="#1F2924"
-              tickFormatter={(value) => `₱${(value / 1000).toFixed(0)}k`}
-            />
+          <AreaChart data={data} margin={{ top: 10, right: 10, left: 0, bottom: 0 }}>
+            <defs>
+              <linearGradient id="payrollGradient" x1="0" y1="0" x2="0" y2="1">
+                <stop offset="0%" stopColor="#34D399" stopOpacity={0.4} />
+                <stop offset="100%" stopColor="#34D399" stopOpacity={0} />
+              </linearGradient>
+            </defs>
+            <CartesianGrid strokeDasharray="3 3" stroke="#1F2924" vertical={false} />
+            <XAxis dataKey="month" stroke="#7C8A82" fontSize={11} tickLine={false} axisLine={false} />
+            <YAxis stroke="#7C8A82" fontSize={11} tickLine={false} axisLine={false} tickFormatter={(v) => `₱${(v / 1000).toFixed(0)}k`} />
             <Tooltip
-              contentStyle={{
-                backgroundColor: "#181F1B",
-                border: "1px solid #1F2924",
-                borderRadius: 12,
-              }}
-              labelStyle={{ color: "#7C8A82" }}
-              itemStyle={{ color: "#EAF4EF" }}
-              formatter={(value: any) => [`₱${Number(value).toLocaleString()}`, "Total Payroll"]}
+              contentStyle={{ backgroundColor: '#12161A', border: '1px solid #1F2924', borderRadius: 12 }}
+              labelStyle={{ color: '#EAF4EF' }}
+              itemStyle={{ color: '#EAF4EF' }}
             />
-            <Bar dataKey="total" fill="#34D399" radius={[6, 6, 0, 0]} />
-          </BarChart>
+            <Area type="monotone" dataKey="total" stroke="#34D399" strokeWidth={2} fill="url(#payrollGradient)" />
+          </AreaChart>
         </ResponsiveContainer>
       )}
     </div>

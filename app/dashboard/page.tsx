@@ -9,7 +9,8 @@ import AttendanceTrendChart from "@/components/dashboard/AttendanceTrendChart";
 import PayrollTrendChart from "@/components/dashboard/PayrollTrendChart";
 import DepartmentBreakdownChart from "@/components/dashboard/DepartmentBreakdownChart";
 import RecentActivity from "@/components/dashboard/RecentActivity";
-
+import PayrollByDepartmentChart from "@/components/dashboard/PayrollByDepartmentChart";
+import TodaySnapshot from "@/components/dashboard/TodaySnapshot";
 // ─── Types ───────────────────────────────────────────────
 type DashboardStats = {
   totalEmployees: number
@@ -198,8 +199,12 @@ export default function DashboardPage() {
         </div>
 
         {/* Recent Activity */}
-        <div className="mb-8">
-          <RecentActivity />
+        {/* Recent Activity + Today's Snapshot */}
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 mb-8">
+          <div className="lg:col-span-2">
+            <RecentActivity />
+          </div>
+          <TodaySnapshot />
         </div>
 
         {/* Analytics */}
@@ -213,9 +218,8 @@ export default function DashboardPage() {
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
             <AttendanceTrendChart />
             <PayrollTrendChart />
-            <div className="lg:col-span-2">
-              <DepartmentBreakdownChart />
-            </div>
+            <PayrollByDepartmentChart />
+            <DepartmentBreakdownChart />
           </div>
         </div>
       </div>
