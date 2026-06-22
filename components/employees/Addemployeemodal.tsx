@@ -1,23 +1,7 @@
 'use client'
 
 import { useState } from 'react'
-import { supabase } from '@/lib/supabase'
-
-// ─── Types ────────────────────────────────────────────────
-type Employee = {
-  id: string
-  employee_id: string
-  full_name: string
-  email: string
-  contact_number: string
-  position: string
-  department: string
-  date_hired: string
-  employment_status: 'Active' | 'Resigned' | 'On Leave'
-  created_at: string
-}
-
-type EmployeeForm = Omit<Employee, 'id' | 'created_at'>
+import type { Employee, EmployeeForm } from '@/lib/services/employeeService'
 
 const emptyForm: EmployeeForm = {
   employee_id: '',
@@ -30,14 +14,12 @@ const emptyForm: EmployeeForm = {
   employment_status: 'Active',
 }
 
-// ─── Props ────────────────────────────────────────────────
 type Props = {
   editTarget: Employee | null
   onClose: () => void
   onSaved: () => void
 }
 
-// ─── Component ────────────────────────────────────────────
 export default function AddEmployeeModal({ editTarget, onClose, onSaved }: Props) {
   const [form, setForm] = useState<EmployeeForm>(
     editTarget
@@ -64,19 +46,28 @@ export default function AddEmployeeModal({ editTarget, onClose, onSaved }: Props
     setSaving(true)
     setError('')
 
-    if (editTarget) {
-      const { error } = await supabase
-        .from('employees')
-        .update(form)
-        .eq('id', editTarget.id)
-      if (error) { setError(error.message); setSaving(false); return }
-    } else {
-      const { error } = await supabase.from('employees').insert(form)
-      if (error) { setError(error.message); setSaving(false); return }
-    }
+    try {
+      const url = editTarget ? `/api/employees/${editTarget.id}` : '/api/employees'
+      const method = editTarget ? 'PUT' : 'POST'
 
-    setSaving(false)
-    onSaved()
+      const res = await fetch(url, {
+        method,
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(form),
+      })
+
+      if (!res.ok) {
+        const { error } = await res.json()
+        setError(error)
+        return
+      }
+
+      onSaved()
+    } catch {
+      setError('Something went wrong.')
+    } finally {
+      setSaving(false)
+    }
   }
 
   return (
@@ -134,10 +125,7 @@ export default function AddEmployeeModal({ editTarget, onClose, onSaved }: Props
   )
 }
 
-// ─── Reusable Field ───────────────────────────────────────
-function Field({
-  label, value, onChange, placeholder = '', type = 'text',
-}: {
+function Field({ label, value, onChange, placeholder = '', type = 'text' }: {
   label: string
   value: string
   onChange: (v: string) => void

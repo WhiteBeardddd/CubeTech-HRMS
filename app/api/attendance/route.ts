@@ -1,0 +1,28 @@
+import { NextRequest, NextResponse } from 'next/server'
+import { getAllAttendance, getEmployeesForAttendance, createAttendance } from '@/lib/services/attendanceService'
+
+export async function GET(req: NextRequest) {
+  const { searchParams } = new URL(req.url)
+  const type = searchParams.get('type')
+
+  try {
+    if (type === 'employees') {
+      const data = await getEmployeesForAttendance()
+      return NextResponse.json(data)
+    }
+    const data = await getAllAttendance()
+    return NextResponse.json(data)
+  } catch (err: any) {
+    return NextResponse.json({ error: err.message }, { status: 500 })
+  }
+}
+
+export async function POST(req: NextRequest) {
+  try {
+    const body = await req.json()
+    const record = await createAttendance(body)
+    return NextResponse.json(record, { status: 201 })
+  } catch (err: any) {
+    return NextResponse.json({ error: err.message }, { status: 400 })
+  }
+}

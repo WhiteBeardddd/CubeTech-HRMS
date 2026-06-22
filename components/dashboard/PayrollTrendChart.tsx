@@ -1,37 +1,46 @@
-"use client";
+'use client'
 
-import { useEffect, useState } from "react";
-import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts'
-import { getPayrollTrend } from "@/lib/analytics";
+import { useEffect, useState } from 'react'
+import {
+  AreaChart,
+  Area,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
+  ResponsiveContainer,
+} from 'recharts'
 
 export default function PayrollTrendChart() {
-  const [data, setData] = useState<any[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [data, setData] = useState<any[]>([])
+  const [loading, setLoading] = useState(true)
 
   useEffect(() => {
-    getPayrollTrend(6)
+    fetch('/api/payroll/trend')
+      .then((res) => res.json())
       .then(setData)
-      .finally(() => setLoading(false));
-  }, []);
+      .catch(console.error)
+      .finally(() => setLoading(false))
+  }, [])
 
   return (
     <div
       className="rounded-[24px] border p-6"
-      style={{ backgroundColor: "#12161A", borderColor: "#1F2924" }}
+      style={{ backgroundColor: '#12161A', borderColor: '#1F2924' }}
     >
       <h3
         className="text-xs font-semibold uppercase tracking-[0.28em] mb-5"
-        style={{ color: "#7C8A82" }}
+        style={{ color: '#7C8A82' }}
       >
         Payroll Trend (Last 6 Months)
       </h3>
 
       {loading ? (
-        <div className="h-64 flex items-center justify-center text-sm" style={{ color: "#7C8A82" }}>
+        <div className="h-64 flex items-center justify-center text-sm" style={{ color: '#7C8A82' }}>
           Loading...
         </div>
       ) : data.length === 0 ? (
-        <div className="h-64 flex items-center justify-center text-sm" style={{ color: "#7C8A82" }}>
+        <div className="h-64 flex items-center justify-center text-sm" style={{ color: '#7C8A82' }}>
           No payroll records yet
         </div>
       ) : (
@@ -45,7 +54,13 @@ export default function PayrollTrendChart() {
             </defs>
             <CartesianGrid strokeDasharray="3 3" stroke="#1F2924" vertical={false} />
             <XAxis dataKey="month" stroke="#7C8A82" fontSize={11} tickLine={false} axisLine={false} />
-            <YAxis stroke="#7C8A82" fontSize={11} tickLine={false} axisLine={false} tickFormatter={(v) => `₱${(v / 1000).toFixed(0)}k`} />
+            <YAxis
+              stroke="#7C8A82"
+              fontSize={11}
+              tickLine={false}
+              axisLine={false}
+              tickFormatter={(v) => `₱${(v / 1000).toFixed(0)}k`}
+            />
             <Tooltip
               contentStyle={{ backgroundColor: '#12161A', border: '1px solid #1F2924', borderRadius: 12 }}
               labelStyle={{ color: '#EAF4EF' }}
@@ -56,5 +71,5 @@ export default function PayrollTrendChart() {
         </ResponsiveContainer>
       )}
     </div>
-  );
+  )
 }

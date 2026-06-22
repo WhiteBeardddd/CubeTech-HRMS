@@ -3,26 +3,12 @@
 import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { Pencil, Trash2, Plus } from 'lucide-react'
-import { supabase } from '@/lib/supabase'
-import Sidebar from '@/components/Sidebar'
-import { useSidebar } from '@/components/SidebarContext'
-import AddEmployeeModal from '@/components/Addemployeemodal'
-import Pagination from '@/components/Pagination'
-import FilterTabs from '@/components/FilterTabs'
-
-// ─── Types ────────────────────────────────────────────────
-type Employee = {
-  id: string
-  employee_id: string
-  full_name: string
-  email: string
-  contact_number: string
-  position: string
-  department: string
-  date_hired: string
-  employment_status: 'Active' | 'Resigned' | 'On Leave'
-  created_at: string
-}
+import Sidebar from '@/components/shared/Sidebar'
+import { useSidebar } from '@/components/shared/SidebarContext'
+import AddEmployeeModal from '@/components/employees/Addemployeemodal'
+import Pagination from '@/components/shared/Pagination'
+import FilterTabs from '@/components/shared/FilterTabs'
+import type { Employee } from '@/lib/services/employeeService'
 
 const STATUS_COLORS: Record<string, string> = {
   Active: '#34D399',
@@ -32,7 +18,6 @@ const STATUS_COLORS: Record<string, string> = {
 
 const PAGE_SIZE = 10
 
-// ─── Main Page ────────────────────────────────────────────
 export default function EmployeesPage() {
   const router = useRouter()
   const { collapsed } = useSidebar()
@@ -44,6 +29,7 @@ export default function EmployeesPage() {
   const [showModal, setShowModal] = useState(false)
   const [editTarget, setEditTarget] = useState<Employee | null>(null)
   const [deleteTarget, setDeleteTarget] = useState<Employee | null>(null)
+  const [deleteError, setDeleteError] = useState('')
   const [currentPage, setCurrentPage] = useState(1)
 
   useEffect(() => {
@@ -58,12 +44,16 @@ export default function EmployeesPage() {
 
   const fetchEmployees = async () => {
     setLoading(true)
-    const { data, error } = await supabase
-      .from('employees')
-      .select('*')
-      .order('created_at', { ascending: false })
-    if (!error && data) setEmployees(data)
-    setLoading(false)
+    try {
+      const res = await fetch('/api/employees')
+      if (!res.ok) throw new Error('Failed to fetch')
+      const data = await res.json()
+      setEmployees(data)
+    } catch (err) {
+      console.error(err)
+    } finally {
+      setLoading(false)
+    }
   }
 
   const openAdd = () => {
@@ -78,9 +68,21 @@ export default function EmployeesPage() {
 
   const handleDelete = async () => {
     if (!deleteTarget) return
-    await supabase.from('employees').delete().eq('id', deleteTarget.id)
-    setDeleteTarget(null)
-    fetchEmployees()
+    setDeleteError('')
+    try {
+      const res = await fetch(`/api/employees/${deleteTarget.id}`, {
+        method: 'DELETE',
+      })
+      if (!res.ok) {
+        const { error } = await res.json()
+        setDeleteError(error)
+        return
+      }
+      setDeleteTarget(null)
+      fetchEmployees()
+    } catch {
+      setDeleteError('Something went wrong.')
+    }
   }
 
   const handleLogout = () => {
@@ -88,7 +90,6 @@ export default function EmployeesPage() {
     router.push('/login')
   }
 
-  // Unique department list, derived from actual data
   const departmentOptions = Array.from(
     new Set(employees.map((e) => e.department).filter(Boolean))
   ).sort()
@@ -202,7 +203,7 @@ export default function EmployeesPage() {
                             <Pencil size={16} />
                           </button>
                           <button
-                            onClick={() => setDeleteTarget(emp)}
+                            onClick={() => { setDeleteError(''); setDeleteTarget(emp) }}
                             title="Delete"
                             className="p-1.5 rounded-md hover:opacity-70 transition-opacity"
                             style={{ color: '#F87171' }}
@@ -229,32 +230,42 @@ export default function EmployeesPage() {
         )}
       </div>
 
-      {/* ── Add / Edit Modal ── */}
+      {/* Add / Edit Modal */}
       {showModal && (
         <AddEmployeeModal
           editTarget={editTarget}
           onClose={() => setShowModal(false)}
-          onSaved={() => {
-            setShowModal(false)
-            fetchEmployees()
-          }}
+          onSaved={() => { setShowModal(false); fetchEmployees() }}
         />
       )}
 
-      {/* ── Delete Confirm Modal ── */}
+      {/* Delete Confirm Modal */}
       {deleteTarget && (
         <div className="fixed inset-0 z-50 flex items-center justify-center" style={{ backgroundColor: 'rgba(0,0,0,0.6)' }}>
           <div className="rounded-2xl w-full max-w-sm mx-4 p-7 text-center" style={{ backgroundColor: '#12161A', border: '1px solid #1F2924' }}>
             <div className="text-4xl mb-4">🗑️</div>
             <h2 className="text-lg font-bold mb-2" style={{ color: '#EAF4EF' }}>Delete Employee?</h2>
-            <p className="text-sm mb-6" style={{ color: '#A8B8AF' }}>
-              Are you sure you want to delete <span className="font-semibold" style={{ color: '#EAF4EF' }}>{deleteTarget.full_name}</span>? This action cannot be undone.
+            <p className="text-sm mb-2" style={{ color: '#A8B8AF' }}>
+              Are you sure you want to delete{' '}
+              <span className="font-semibold" style={{ color: '#EAF4EF' }}>{deleteTarget.full_name}</span>?
+              This action cannot be undone.
             </p>
-            <div className="flex justify-center gap-3">
-              <button onClick={() => setDeleteTarget(null)} className="px-5 py-2 rounded-lg text-sm font-medium" style={{ color: '#A8B8AF', border: '1px solid #1F2924' }}>
+            {deleteError && (
+              <p className="text-xs mb-4" style={{ color: '#F87171' }}>{deleteError}</p>
+            )}
+            <div className="flex justify-center gap-3 mt-4">
+              <button
+                onClick={() => { setDeleteTarget(null); setDeleteError('') }}
+                className="px-5 py-2 rounded-lg text-sm font-medium"
+                style={{ color: '#A8B8AF', border: '1px solid #1F2924' }}
+              >
                 Cancel
               </button>
-              <button onClick={handleDelete} className="px-5 py-2 rounded-lg text-sm font-semibold" style={{ backgroundColor: '#F87171', color: '#1A0A0A' }}>
+              <button
+                onClick={handleDelete}
+                className="px-5 py-2 rounded-lg text-sm font-semibold"
+                style={{ backgroundColor: '#F87171', color: '#1A0A0A' }}
+              >
                 Delete
               </button>
             </div>

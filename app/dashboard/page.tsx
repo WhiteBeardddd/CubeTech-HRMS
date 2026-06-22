@@ -2,9 +2,8 @@
 
 import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
-import { supabase } from '@/lib/supabase'
-import Sidebar from '@/components/Sidebar'
-import { useSidebar } from '@/components/SidebarContext'
+import Sidebar from '@/components/shared/Sidebar'
+import { useSidebar } from '@/components/shared/SidebarContext'
 import AttendanceTrendChart from "@/components/dashboard/AttendanceTrendChart";
 import PayrollTrendChart from "@/components/dashboard/PayrollTrendChart";
 import DepartmentBreakdownChart from "@/components/dashboard/DepartmentBreakdownChart";
@@ -99,40 +98,26 @@ export default function DashboardPage() {
   }, [])
 
   const fetchStats = async () => {
-    setLoading(true)
+  setLoading(true)
 
-    // Total = Active + On Leave only (excludes Resigned)
-    const { count: total } = await supabase
-      .from('employees')
-      .select('*', { count: 'exact', head: true })
-      .neq('employment_status', 'Resigned')
+  try {
+    const res = await fetch('/api/dashboard/stats')
 
-    const { count: active } = await supabase
-      .from('employees')
-      .select('*', { count: 'exact', head: true })
-      .eq('employment_status', 'Active')
+    if (!res.ok) {
+      const { error } = await res.json()
+      console.error('Dashboard stats error:', error)
+      setLoading(false)
+      return
+    }
 
-    const { count: onLeave } = await supabase
-      .from('employees')
-      .select('*', { count: 'exact', head: true })
-      .eq('employment_status', 'On Leave')
-
-    const { data: salaryData } = await supabase
-      .from('salaries')
-      .select('net_salary')
-
-    const totalPayroll =
-      salaryData?.reduce((sum, row) => sum + (row.net_salary || 0), 0) ?? 0
-
-    setStats({
-      totalEmployees: total ?? 0,
-      activeEmployees: active ?? 0,
-      onLeave: onLeave ?? 0,
-      totalMonthlyPayroll: totalPayroll,
-    })
-
+    const data = await res.json()
+    setStats(data)
+  } catch (err) {
+    console.error('Failed to fetch dashboard stats:', err)
+  } finally {
     setLoading(false)
   }
+}
 
   const handleLogout = () => {
     localStorage.removeItem('admin')

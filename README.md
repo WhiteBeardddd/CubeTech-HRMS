@@ -119,7 +119,7 @@ mini-hrms/
 
 <table>
   <tr>
-    <td align="center" width="55%">
+    <td align="center" width="50%">
       <img src="public/images/readme01.png" width="430" alt="Login Page"/>
       <br/>
       <b>Login Page</b>

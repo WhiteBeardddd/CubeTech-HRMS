@@ -1,7 +1,6 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import { supabase } from '@/lib/supabase'
 
 const STATUS_CONFIG = [
   { key: 'Present', color: '#34D399', icon: '✅' },
@@ -16,40 +15,15 @@ export default function TodaySnapshot() {
   const [latestDate, setLatestDate] = useState('')
 
   useEffect(() => {
-    fetchData()
+    fetch('/api/attendance/today')
+      .then((res) => res.json())
+      .then(({ date, counts }) => {
+        setLatestDate(date)
+        setCounts(counts)
+      })
+      .catch(console.error)
+      .finally(() => setLoading(false))
   }, [])
-
-  const fetchData = async () => {
-    setLoading(true)
-
-    // Use the most recent attendance date (so it still works on weekends/demo data)
-    const { data: latest } = await supabase
-      .from('attendance')
-      .select('date')
-      .order('date', { ascending: false })
-      .limit(1)
-      .single()
-
-    if (!latest) {
-      setLoading(false)
-      return
-    }
-
-    setLatestDate(latest.date)
-
-    const { data: rows } = await supabase
-      .from('attendance')
-      .select('status')
-      .eq('date', latest.date)
-
-    const tally: Record<string, number> = {}
-    rows?.forEach((r) => {
-      tally[r.status] = (tally[r.status] || 0) + 1
-    })
-
-    setCounts(tally)
-    setLoading(false)
-  }
 
   const formattedDate = latestDate
     ? new Date(latestDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })

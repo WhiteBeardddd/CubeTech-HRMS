@@ -1,7 +1,7 @@
 'use client'
 
 import { useRouter, usePathname } from 'next/navigation'
-import { useSidebar } from '@/components/SidebarContext'
+import { useSidebar } from '@/components/shared/SidebarContext'
 
 // ─── Nav Items ────────────────────────────────────────────
 const navItems = [

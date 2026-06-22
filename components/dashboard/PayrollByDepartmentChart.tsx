@@ -1,8 +1,16 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell } from 'recharts'
-import { supabase } from '@/lib/supabase'
+import {
+  BarChart,
+  Bar,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
+  ResponsiveContainer,
+  Cell,
+} from 'recharts'
 
 const DEPT_COLORS: Record<string, string> = {
   Finance: '#2DD4BF',
@@ -23,45 +31,15 @@ export default function PayrollByDepartmentChart() {
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
-    fetchData()
+    fetch('/api/payroll/by-department')
+      .then((res) => res.json())
+      .then(({ date, departments }) => {
+        setLatestDate(date)
+        setData(departments)
+      })
+      .catch(console.error)
+      .finally(() => setLoading(false))
   }, [])
-
-  const fetchData = async () => {
-    setLoading(true)
-
-    const { data: latest } = await supabase
-      .from('payroll')
-      .select('payroll_date')
-      .order('payroll_date', { ascending: false })
-      .limit(1)
-      .single()
-
-    if (!latest) {
-      setLoading(false)
-      return
-    }
-
-    setLatestDate(latest.payroll_date)
-
-    const { data: rows } = await supabase
-      .from('payroll')
-      .select('net_salary, employees(department)')
-      .eq('payroll_date', latest.payroll_date)
-
-    const totals: Record<string, number> = {}
-    rows?.forEach((row: any) => {
-      const dept = row.employees?.department
-      if (!dept) return
-      totals[dept] = (totals[dept] || 0) + (row.net_salary || 0)
-    })
-
-    const formatted = Object.entries(totals)
-      .map(([department, total]) => ({ department, total }))
-      .sort((a, b) => b.total - a.total)
-
-    setData(formatted)
-    setLoading(false)
-  }
 
   const formattedDate = latestDate
     ? new Date(latestDate).toLocaleDateString('en-US', { month: 'short', year: 'numeric' })
