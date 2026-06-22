@@ -73,31 +73,26 @@ export async function createPayroll(form: PayrollForm, existingPayrolls: Payroll
   )
   if (duplicate) throw new Error('A payroll record already exists for this employee on this date.')
 
+  const basic = parseFloat(form.basic_salary) || 0
+  const allowance = parseFloat(form.allowance) || 0
+  const deductions = parseFloat(form.deductions) || 0
+
   const payload = {
     employee_id: form.employee_id,
-    basic_salary: parseFloat(form.basic_salary) || 0,
-    allowance: parseFloat(form.allowance) || 0,
-    deductions: parseFloat(form.deductions) || 0,
+    basic_salary: basic,
+    allowance: allowance,
+    deductions: deductions,
+    net_salary: basic + allowance - deductions,
     payroll_date: form.payroll_date,
   }
 
-  const { data: inserted, error } = await supabase
+  const { data, error } = await supabase
     .from('payroll')
     .insert(payload)
-    .select('id')
+    .select('*, employees(employee_id, full_name, department)')
     .single()
 
   if (error) throw new Error(error.message)
-
-  const { data, error: fetchError } = await supabase
-    .from('payroll')
-    .select('*, employees(employee_id, full_name, department)')
-    .eq('id', inserted.id)
-    .single()
-
-  if (fetchError) throw new Error(fetchError.message)
-
-  // if (error) throw new Error(error.message)
   return data as PayrollRecord
 }
 

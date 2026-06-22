@@ -19,7 +19,7 @@ export async function getAllEmployees() {
   const { data, error } = await supabase
     .from('employees')
     .select('*')
-    .order('created_at', { ascending: true })
+    .order('employee_id', { ascending: true })
 
   if (error) throw new Error(error.message)
   return data as Employee[]

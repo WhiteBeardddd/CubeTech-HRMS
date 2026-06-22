@@ -283,7 +283,10 @@ export default function PayrollPage() {
           salaries={salaries}
           existingPayrolls={payrolls}
           onClose={() => setShowModal(false)}
-          onSaved={() => { setShowModal(false); fetchAll() }}
+          onSaved={() => {
+            setShowModal(false)
+            setTimeout(() => fetchAll(), 300)
+          }}
         />
       )}
 
