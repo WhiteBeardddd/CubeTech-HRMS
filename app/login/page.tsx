@@ -3,7 +3,14 @@
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import Image from 'next/image'
-import { supabase } from '@/lib/supabase'
+import { Users, CalendarCheck, DollarSign, ReceiptText } from 'lucide-react'
+
+const features = [
+  { label: 'Employee Records', icon: Users },
+  { label: 'Attendance Tracking', icon: CalendarCheck },
+  { label: 'Salary Management', icon: DollarSign },
+  { label: 'Payroll Summary', icon: ReceiptText },
+]
 
 export default function LoginPage() {
   const router = useRouter()
@@ -17,40 +24,42 @@ export default function LoginPage() {
     setLoading(true)
     setError('')
 
-    const { data, error } = await supabase
-      .from('users')
-      .select('*')
-      .eq('email', email)
-      .eq('password', password)
-      .single()
+    try {
+      const res = await fetch('/api/auth', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email, password }),
+      })
 
-    if (error || !data) {
-      setError('Invalid email or password. Please try again.')
+      if (!res.ok) {
+        const { error } = await res.json()
+        setError(error)
+        return
+      }
+
+      const data = await res.json()
+      localStorage.setItem('admin', JSON.stringify(data))
+      router.push('/dashboard')
+    } catch {
+      setError('Something went wrong. Please try again.')
+    } finally {
       setLoading(false)
-      return
     }
-
-    localStorage.setItem('admin', JSON.stringify(data))
-    router.push('/dashboard')
   }
 
   return (
     <div className="min-h-screen flex p-4 gap-4" style={{ backgroundColor: '#0A0E0C' }}>
 
       {/* Left Panel — photo visual */}
-      <div
-        className="hidden lg:flex relative flex-col justify-between w-2/5 p-10 rounded-[28px] overflow-hidden"
-      >
-        {/* Background photo */}
+      <div className="hidden lg:flex relative flex-col justify-between w-1/2 p-10 rounded-[28px] overflow-hidden">
         <Image
           src="/images/login-bg.jpg"
           alt=""
           fill
           priority
+          sizes="(max-width: 1024px) 0vw, 50vw"
           className="object-cover"
         />
-
-        {/* Dark gradient overlay for text legibility */}
         <div
           className="absolute inset-0"
           style={{
@@ -90,19 +99,14 @@ export default function LoginPage() {
 
         {/* Feature pills */}
         <div className="relative z-10 grid grid-cols-2 gap-3">
-          {[
-            { label: 'Employee Records', icon: '👤' },
-            { label: 'Attendance Tracking', icon: '📅' },
-            { label: 'Salary Management', icon: '💰' },
-            { label: 'Payroll Summary', icon: '🧾' },
-          ].map((item) => (
+          {features.map(({ label, icon: Icon }) => (
             <div
-              key={item.label}
+              key={label}
               className="rounded-xl p-3.5 backdrop-blur-sm"
               style={{ backgroundColor: 'rgba(255,255,255,0.08)', border: '1px solid rgba(255,255,255,0.12)' }}
             >
-              <div className="text-lg mb-1.5">{item.icon}</div>
-              <div className="text-xs font-medium" style={{ color: '#A8B8AF' }}>{item.label}</div>
+              <Icon size={18} className="mb-1.5" style={{ color: '#34D399' }} />
+              <div className="text-xs font-medium" style={{ color: '#A8B8AF' }}>{label}</div>
             </div>
           ))}
         </div>

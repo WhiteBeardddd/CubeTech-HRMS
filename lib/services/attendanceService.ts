@@ -114,33 +114,66 @@ export async function deleteAttendance(id: string) {
 
   if (error) throw new Error(error.message)
 }
-
 export async function getAttendanceTrend(days: number = 30) {
-  const since = new Date()
-  since.setDate(since.getDate() - days)
-
-  const { data, error } = await supabase
+  // Step 1: Get the latest date
+  const { data: latestRow, error: latestError } = await supabase
     .from('attendance')
-    .select('date, status')
-    .gte('date', since.toISOString().split('T')[0])
-    .order('date', { ascending: true })
+    .select('date')
+    .order('date', { ascending: false })
+    .limit(1)
+    .single()
 
-  if (error) throw new Error(error.message)
+  if (latestError) throw new Error(latestError.message)
 
-  const grouped: Record<string, { date: string; Present: number; Absent: number; Late: number; 'On Leave': number }> = {}
+  const latestDate = latestRow.date
+  const [y, m, d] = latestDate.split('-').map(Number)
+  const sinceObj = new Date(Date.UTC(y, m - 1, d - (days - 1)))
+  const sinceDate = sinceObj.toISOString().split('T')[0]
 
-  data?.forEach((row) => {
-    const day = row.date
-    if (!grouped[day]) {
-      grouped[day] = { date: day, Present: 0, Absent: 0, Late: 0, 'On Leave': 0 }
+  // Step 2: Fetch with pagination to bypass the 1000-row default limit
+  let allRows: { date: string; status: string }[] = []
+  let from = 0
+  const pageSize = 1000
+
+  while (true) {
+    const { data, error } = await supabase
+      .from('attendance')
+      .select('date, status')
+      .gte('date', sinceDate)
+      .lte('date', latestDate)
+      .order('date', { ascending: true })
+      .range(from, from + pageSize - 1)
+
+    if (error) throw new Error(error.message)
+    if (!data || data.length === 0) break
+
+    allRows = allRows.concat(data)
+    if (data.length < pageSize) break
+    from += pageSize
+  }
+
+  // Step 3: Group in JS
+  const grouped: Record<string, {
+    date: string
+    Present: number
+    Absent: number
+    Late: number
+    onLeave: number
+  }> = {}
+
+  for (const row of allRows) {
+    if (!grouped[row.date]) {
+      grouped[row.date] = { date: row.date, Present: 0, Absent: 0, Late: 0, onLeave: 0 }
     }
-    if (row.status in grouped[day]) {
-      // @ts-ignore
-      grouped[day][row.status] += 1
+    switch (row.status) {
+      case 'Present':  grouped[row.date].Present++;  break
+      case 'Absent':   grouped[row.date].Absent++;   break
+      case 'Late':     grouped[row.date].Late++;     break
+      case 'On Leave': grouped[row.date].onLeave++;  break
     }
-  })
+  }
 
-  return Object.values(grouped)
+  return Object.values(grouped).sort((a, b) => a.date.localeCompare(b.date))
 }
 
 export async function getTodaySnapshot() {

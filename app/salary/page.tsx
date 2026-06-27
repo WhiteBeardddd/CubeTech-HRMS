@@ -217,7 +217,24 @@ export default function SalaryPage() {
         {/* Filter Tabs */}
         <div className="flex flex-col gap-3 mb-5">
           <FilterTabs label="Department" options={departmentOptions} active={deptFilter} onChange={setDeptFilter} />
-          <FilterTabs label="Role" options={roleOptions} active={roleFilter} onChange={setRoleFilter} />
+          <div className="flex items-center gap-3">
+            <span className="text-xs font-semibold uppercase tracking-wider" style={{ color: '#7C8A82' }}>Role</span>
+            <select
+              value={roleFilter}
+              onChange={(e) => setRoleFilter(e.target.value)}
+              className="px-3 py-2 rounded-lg text-sm outline-none"
+              style={{
+                border: '1px solid #1F2924',
+                backgroundColor: '#181F1B',
+                color: roleFilter === 'All' ? '#7C8A82' : '#EAF4EF',
+              }}
+            >
+              <option value="All">All Roles</option>
+              {roleOptions.map((role) => (
+                <option key={role} value={role}>{role}</option>
+              ))}
+            </select>
+          </div>
         </div>
 
         {/* Table */}

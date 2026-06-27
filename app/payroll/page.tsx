@@ -300,18 +300,22 @@ export default function PayrollPage() {
 
       <style jsx global>{`
         @media print {
-          @page { size: A4 portrait; margin: 16mm 14mm; }
+          @page { size: A4 landscape; margin: 16mm 14mm; }
           body { background: white !important; }
-          .payroll-print-table { width: 100%; border-collapse: collapse; table-layout: fixed; font-size: 10pt; color: #111; }
+          .payroll-print-table { width: 100%; border-collapse: collapse; table-layout: fixed; font-size: 9pt; color: #111; }
           .payroll-print-table thead { display: table-header-group; }
           .payroll-print-table tfoot { display: table-footer-group; }
           .payroll-print-table tr { page-break-inside: avoid; break-inside: avoid; }
-          .payroll-print-table th, .payroll-print-table td { padding: 7px 9px; border-bottom: 1px solid #ddd; text-align: left; vertical-align: top; }
-          .payroll-print-table th { font-size: 8.5pt; text-transform: uppercase; letter-spacing: 0.04em; color: #555; border-bottom: 1.5px solid #999; }
+          .payroll-print-table th, .payroll-print-table td { padding: 7px 12px; border-bottom: 1px solid #ddd; text-align: left; vertical-align: top; white-space: nowrap; }
+          .payroll-print-table th { font-size: 8pt; text-transform: uppercase; letter-spacing: 0.04em; color: #555; border-bottom: 1.5px solid #999; }
           .payroll-print-table .num { text-align: right; }
-          .payroll-print-table .muted { font-size: 8.5pt; color: #777; }
-          .payroll-print-table th:nth-child(1), .payroll-print-table td:nth-child(1) { width: 28%; }
-          .payroll-print-table th:nth-child(6), .payroll-print-table td:nth-child(6) { width: 14%; }
+          .payroll-print-table .muted { font-size: 8pt; color: #777; white-space: normal; }
+          .payroll-print-table th:nth-child(1), .payroll-print-table td:nth-child(1) { width: 22%; white-space: normal; }
+          .payroll-print-table th:nth-child(2), .payroll-print-table td:nth-child(2) { width: 16%; }
+          .payroll-print-table th:nth-child(3), .payroll-print-table td:nth-child(3) { width: 14%; }
+          .payroll-print-table th:nth-child(4), .payroll-print-table td:nth-child(4) { width: 14%; }
+          .payroll-print-table th:nth-child(5), .payroll-print-table td:nth-child(5) { width: 16%; }
+          .payroll-print-table th:nth-child(6), .payroll-print-table td:nth-child(6) { width: 18%; }
           .payroll-print-table tfoot td { border-top: 1.5px solid #999; border-bottom: none; padding-top: 10px; }
         }
       `}</style>

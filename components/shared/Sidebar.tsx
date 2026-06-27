@@ -1,15 +1,15 @@
 'use client'
-
+import { LayoutDashboard, Users, DollarSign, CalendarCheck, ReceiptText, LogOut } from 'lucide-react'
 import { useRouter, usePathname } from 'next/navigation'
 import { useSidebar } from '@/components/shared/SidebarContext'
 
 // ─── Nav Items ────────────────────────────────────────────
 const navItems = [
-  { label: 'Dashboard', icon: '📊', href: '/dashboard' },
-  { label: 'Employees', icon: '👤', href: '/employees' },
-  { label: 'Salary', icon: '💰', href: '/salary' },
-  { label: 'Attendance', icon: '📅', href: '/attendance' },
-  { label: 'Payroll', icon: '🧾', href: '/payroll' },
+  { label: 'Dashboard', icon: LayoutDashboard, href: '/dashboard' },
+  { label: 'Employees', icon: Users, href: '/employees' },
+  { label: 'Salary', icon: DollarSign, href: '/salary' },
+  { label: 'Attendance', icon: CalendarCheck, href: '/attendance' },
+  { label: 'Payroll', icon: ReceiptText, href: '/payroll' },
 ]
 
 // ─── Props ────────────────────────────────────────────────
@@ -85,6 +85,7 @@ export default function Sidebar({ onLogout }: SidebarProps) {
       <nav className="flex flex-col gap-1 flex-1">
         {navItems.map((item) => {
           const isActive = pathname === item.href
+          const Icon = item.icon
           return (
             <button
               key={item.href}
@@ -110,7 +111,7 @@ export default function Sidebar({ onLogout }: SidebarProps) {
                 }
               }}
             >
-              <span className="shrink-0">{item.icon}</span>
+              <Icon size={18} className="shrink-0" />
               {!collapsed && <span className="truncate">{item.label}</span>}
             </button>
           )
@@ -134,7 +135,7 @@ export default function Sidebar({ onLogout }: SidebarProps) {
           e.currentTarget.style.color = '#94A3A3'
         }}
       >
-        <span className="shrink-0">🚪</span>
+        <LogOut size={18} className="shrink-0" />
         {!collapsed && <span className="truncate">Logout</span>}
       </button>
     </div>
